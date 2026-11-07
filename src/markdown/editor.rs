@@ -417,7 +417,7 @@ impl EditorColors {
     pub fn from_theme(theme: Theme, visuals: &egui::Visuals, accent: Color32) -> Self {
         let mut c = match theme {
             Theme::Dark => Self::dark(),
-            Theme::Light => Self::light(),
+            Theme::Light | Theme::SolarizedLight => Self::light(),
             Theme::System => {
                 if visuals.dark_mode {
                     Self::dark()
@@ -428,7 +428,7 @@ impl EditorColors {
         };
         let dark = match theme {
             Theme::Dark => true,
-            Theme::Light => false,
+            Theme::Light | Theme::SolarizedLight => false,
             Theme::System => visuals.dark_mode,
         };
         c.heading = accent;

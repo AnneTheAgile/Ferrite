@@ -106,7 +106,7 @@ impl WidgetColors {
     pub fn from_theme(theme: Theme, visuals: &egui::Visuals, accent: Color32) -> Self {
         let is_dark = match theme {
             Theme::Dark => true,
-            Theme::Light => false,
+            Theme::Light | Theme::SolarizedLight => false,
             Theme::System => visuals.dark_mode,
         };
 

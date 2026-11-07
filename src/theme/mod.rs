@@ -48,6 +48,7 @@ pub mod accent;
 pub mod dark;
 pub mod light;
 pub mod manager;
+pub mod solarized_light;
 
 pub use manager::ThemeManager;
 
@@ -100,6 +101,7 @@ impl ThemeColors {
         let mut palette = match theme {
             crate::config::Theme::Dark => Self::dark(),
             crate::config::Theme::Light => Self::light(),
+            crate::config::Theme::SolarizedLight => Self::solarized_light(),
             crate::config::Theme::System => {
                 if visuals.dark_mode {
                     Self::dark()
@@ -131,6 +133,21 @@ impl ThemeColors {
             editor: EditorThemeColors::dark(),
             syntax: SyntaxColors::dark(),
             ui: UiColors::dark(),
+        }
+    }
+
+    /// Get the Solarized Light theme colors.
+    ///
+    /// Solarized Light is a *light* theme (`is_dark()` is false), so it flows
+    /// through the light visualiser and the light code paths everywhere else;
+    /// only the palette values below differ from [`Self::light`].
+    pub fn solarized_light() -> Self {
+        Self {
+            base: BaseColors::solarized_light(),
+            text: TextColors::solarized_light(),
+            editor: EditorThemeColors::solarized_light(),
+            syntax: SyntaxColors::solarized_light(),
+            ui: UiColors::solarized_light(),
         }
     }
 
@@ -232,6 +249,23 @@ impl BaseColors {
             selected: Color32::from_rgb(40, 60, 80),
         }
     }
+
+    /// Solarized Light base colors (Ethan Schoonover's palette, MIT).
+    ///
+    /// `background` is base3, `background_secondary` is base2. Borders use
+    /// base01/base1 rather than a neutral grey so the chrome keeps the
+    /// palette's warm-blue cast instead of turning grey.
+    pub fn solarized_light() -> Self {
+        Self {
+            background: Color32::from_rgb(253, 246, 227), // base3  #FDF6E3
+            background_secondary: Color32::from_rgb(238, 232, 213), // base2 #EEE8D5
+            background_tertiary: Color32::from_rgb(230, 223, 203), // base2 - 8
+            border: Color32::from_rgb(88, 110, 117),      // base01 #586E75
+            border_subtle: Color32::from_rgb(147, 161, 161), // base1 #93A1A1
+            hover: Color32::from_rgb(233, 226, 206),      // base2/base3 blend
+            selected: Color32::from_rgb(38, 139, 210),    // blue   #268BD2
+        }
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -285,6 +319,22 @@ impl TextColors {
             disabled: Color32::from_rgb(100, 100, 100),
             link: Color32::from_rgb(100, 180, 255),
             code: Color32::from_rgb(200, 200, 150),
+        }
+    }
+
+    /// Solarized Light text colors.
+    ///
+    /// `primary` is base01 rather than Solarized's usual body colour base00:
+    /// base00 on base3 is only ~4.5:1, which is thin for 14px UI labels, so
+    /// body text is promoted one step and base00 becomes `secondary`.
+    pub fn solarized_light() -> Self {
+        Self {
+            primary: Color32::from_rgb(88, 110, 117), // base01 #586E75
+            secondary: Color32::from_rgb(101, 123, 131), // base00 #657B83
+            muted: Color32::from_rgb(131, 148, 150),  // base0  #839496
+            disabled: Color32::from_rgb(160, 172, 172), // base1 + 13
+            link: Color32::from_rgb(38, 139, 210),    // blue   #268BD2
+            code: Color32::from_rgb(88, 110, 117),    // base01 #586E75
         }
     }
 }
@@ -360,6 +410,22 @@ impl EditorThemeColors {
             table_header_bg: Color32::from_rgb(45, 50, 60),
         }
     }
+
+    /// Solarized Light editor colors.
+    pub fn solarized_light() -> Self {
+        Self {
+            heading: Color32::from_rgb(38, 139, 210), // blue   #268BD2
+            blockquote_border: Color32::from_rgb(147, 161, 161), // base1
+            blockquote_text: Color32::from_rgb(101, 123, 131), // base00
+            code_block_bg: Color32::from_rgb(238, 232, 213), // base2
+            code_block_border: Color32::from_rgb(147, 161, 161), // base1
+            horizontal_rule: Color32::from_rgb(147, 161, 161), // base1
+            list_marker: Color32::from_rgb(101, 123, 131), // base00
+            checkbox: Color32::from_rgb(38, 139, 210), // blue   #268BD2
+            table_border: Color32::from_rgb(147, 161, 161), // base1
+            table_header_bg: Color32::from_rgb(238, 232, 213), // base2
+        }
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -423,6 +489,21 @@ impl SyntaxColors {
             punctuation: Color32::from_rgb(150, 150, 150), // Gray
         }
     }
+
+    /// Solarized Light syntax colors (Solarized's canonical code accents).
+    pub fn solarized_light() -> Self {
+        Self {
+            keyword: Color32::from_rgb(133, 153, 0),    // green   #859900
+            string: Color32::from_rgb(42, 161, 152),    // cyan    #2AA198
+            number: Color32::from_rgb(211, 54, 130),    // magenta #D33682
+            comment: Color32::from_rgb(147, 161, 161),  // base1  #93A1A1
+            function: Color32::from_rgb(38, 139, 210),  // blue   #268BD2
+            type_name: Color32::from_rgb(181, 137, 0),  // yellow #B58900
+            variable: Color32::from_rgb(101, 123, 131), // base00 #657B83
+            operator: Color32::from_rgb(88, 110, 117),  // base01 #586E75
+            punctuation: Color32::from_rgb(131, 148, 150), // base0 #839496
+        }
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -478,6 +559,21 @@ impl UiColors {
             // Subtle cyan/blue tint for bracket matching - visible on dark backgrounds
             matching_bracket_bg: Color32::from_rgba_unmultiplied(80, 180, 220, 60),
             matching_bracket_border: Color32::from_rgb(100, 180, 220),
+        }
+    }
+
+    /// Solarized Light UI feedback colors.
+    pub fn solarized_light() -> Self {
+        Self {
+            accent: Color32::from_rgb(38, 139, 210), // blue    #268BD2
+            accent_hover: Color32::from_rgb(32, 119, 180), // blue - darken
+            success: Color32::from_rgb(133, 153, 0), // green   #859900
+            warning: Color32::from_rgb(181, 137, 0), // yellow  #B58900
+            error: Color32::from_rgb(220, 50, 47),   // red     #DC322F
+            info: Color32::from_rgb(42, 161, 152),   // cyan    #2AA198
+            // Yellow tint for bracket matching, on-palette with #B58900.
+            matching_bracket_bg: Color32::from_rgba_unmultiplied(181, 137, 0, 80),
+            matching_bracket_border: Color32::from_rgb(181, 137, 0),
         }
     }
 }

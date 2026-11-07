@@ -880,10 +880,18 @@ impl SettingsPanel {
         ui.add_space(4.0);
 
         ui.horizontal(|ui| {
-            for theme in [Theme::Light, Theme::Dark, Theme::System] {
+            for theme in [
+                Theme::Light,
+                Theme::Dark,
+                Theme::SolarizedLight,
+                Theme::System,
+            ] {
                 let label = match theme {
                     Theme::Light => format!("{} {}", SUN, t!("settings.general.theme_light")),
                     Theme::Dark => format!("{} {}", MOON, t!("settings.general.theme_dark")),
+                    Theme::SolarizedLight => {
+                        format!("{} {}", SUN, t!("settings.general.theme_solarized"))
+                    }
                     Theme::System => format!("{} {}", DESKTOP, t!("settings.general.theme_system")),
                 };
                 if ui

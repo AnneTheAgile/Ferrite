@@ -156,6 +156,7 @@ settings:
     theme: "Theme"
     theme_dark: "Dark"
     theme_light: "Light"
+    theme_solarized: "Solarized"
     theme_system: "System"
     restore_session: "Restore previous session on startup"
   editor:

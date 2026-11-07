@@ -1520,6 +1520,10 @@ pub enum Theme {
     Light,
     Dark,
     System,
+    /// Solarized Light (Ethan Schoonover's palette). A light theme: it only
+    /// changes the palette, never the light/dark behaviour of the UI.
+    #[serde(rename = "solarized-light")]
+    SolarizedLight,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

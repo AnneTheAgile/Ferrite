@@ -65,7 +65,7 @@ impl WelcomePanel {
                     let system_dark = ui.ctx().global_style().visuals.dark_mode;
                     let is_dark = match settings.theme {
                         Theme::Dark => true,
-                        Theme::Light => false,
+                        Theme::Light | Theme::SolarizedLight => false,
                         Theme::System => system_dark,
                     };
 
@@ -104,7 +104,12 @@ impl WelcomePanel {
                                 .color(text_color),
                         );
                         ui.add_space(8.0);
-                        for theme in [Theme::Light, Theme::Dark, Theme::System] {
+                        for theme in [
+                            Theme::Light,
+                            Theme::Dark,
+                            Theme::SolarizedLight,
+                            Theme::System,
+                        ] {
                             let label = match theme {
                                 Theme::Light => {
                                     format!("  {}  ", t!("settings.general.theme_light").to_string())
@@ -112,6 +117,10 @@ impl WelcomePanel {
                                 Theme::Dark => {
                                     format!("  {}  ", t!("settings.general.theme_dark").to_string())
                                 }
+                                Theme::SolarizedLight => format!(
+                                    "  {}  ",
+                                    t!("settings.general.theme_solarized").to_string()
+                                ),
                                 Theme::System => {
                                     format!("  {}  ", t!("settings.general.theme_system").to_string())
                                 }

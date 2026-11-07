@@ -30,7 +30,7 @@
 use eframe::egui::{self, Context, Visuals};
 use log::{debug, info};
 
-use super::{dark, light, ThemeColors};
+use super::{dark, light, solarized_light, ThemeColors};
 use crate::config::Theme;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -119,6 +119,7 @@ impl ThemeManager {
         let new_theme = match self.current_theme {
             Theme::Light => Theme::Dark,
             Theme::Dark => Theme::Light,
+            Theme::SolarizedLight => Theme::Dark,
             Theme::System => Theme::Dark, // System -> Dark as starting point
         };
         self.set_theme(new_theme);
@@ -132,6 +133,7 @@ impl ThemeManager {
         let new_theme = match self.current_theme {
             Theme::Light => Theme::Dark,
             Theme::Dark => Theme::Light,
+            Theme::SolarizedLight => Theme::Dark,
             Theme::System => Theme::Light, // If somehow on System, go to Light
         };
         self.set_theme(new_theme);
@@ -182,7 +184,9 @@ impl ThemeManager {
                 ctx.set_theme(egui::ThemePreference::Dark);
                 ctx.set_visuals_of(egui::Theme::Dark, visuals);
             }
-            Theme::Light => {
+            Theme::Light | Theme::SolarizedLight => {
+                // Solarized Light is a light theme: it must occupy egui's
+                // Light slot, otherwise widgets resolve against dark defaults.
                 ctx.set_theme(egui::ThemePreference::Light);
                 ctx.set_visuals_of(egui::Theme::Light, visuals);
             }
@@ -237,6 +241,7 @@ impl ThemeManager {
 
         let visuals = match self.current_theme {
             Theme::Light => light::create_light_visuals(acc),
+            Theme::SolarizedLight => solarized_light::create_solarized_light_visuals(acc),
             Theme::Dark => dark::create_dark_visuals(acc),
             Theme::System => {
                 // Follow system preference
@@ -272,7 +277,7 @@ impl ThemeManager {
     pub fn is_dark(&self, ctx: &Context) -> bool {
         match self.current_theme {
             Theme::Dark => true,
-            Theme::Light => false,
+            Theme::Light | Theme::SolarizedLight => false,
             Theme::System => ctx.global_style().visuals.dark_mode,
         }
     }
@@ -283,6 +288,7 @@ impl ThemeManager {
             Theme::Light => "Light",
             Theme::Dark => "Dark",
             Theme::System => "System",
+            Theme::SolarizedLight => "Solarized Light",
         }
     }
 
@@ -293,6 +299,7 @@ impl ThemeManager {
             Theme::Light => SUN,
             Theme::Dark => MOON,
             Theme::System => DESKTOP,
+            Theme::SolarizedLight => SUN,
         }
     }
 
@@ -301,6 +308,7 @@ impl ThemeManager {
         match self.current_theme {
             Theme::Light => "Light theme".to_string(),
             Theme::Dark => "Dark theme".to_string(),
+            Theme::SolarizedLight => "Solarized Light theme".to_string(),
             Theme::System => {
                 let effective = if ctx.global_style().visuals.dark_mode {
                     "dark"
