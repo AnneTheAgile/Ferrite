@@ -2,6 +2,10 @@
 name: CI
 
 on:
+  # Run on PRs, and on pushes to the default branch so a broken build
+  # cannot land unnoticed by landing directly instead of via a PR.
+  push:
+    branches: [master]
   pull_request:
 
 env:

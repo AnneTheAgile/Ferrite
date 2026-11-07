@@ -7,6 +7,7 @@
 [![Website](https://img.shields.io/badge/website-getferrite.dev-blue?style=flat-square)](https://getferrite.dev)
 [![Latest Release](https://img.shields.io/github/v/release/OlaProeis/Ferrite?style=flat-square)](https://github.com/OlaProeis/Ferrite/releases)
 [![License](https://img.shields.io/github/license/OlaProeis/Ferrite?style=flat-square)](LICENSE)
+[![CI](https://github.com/OlaProeis/Ferrite/actions/workflows/ci.yml/badge.svg)](https://github.com/OlaProeis/Ferrite/actions/workflows/ci.yml)
 [![GitHub Stars](https://img.shields.io/github/stars/OlaProeis/Ferrite?style=flat-square)](https://github.com/OlaProeis/Ferrite/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/OlaProeis/Ferrite?style=flat-square)](https://github.com/OlaProeis/Ferrite/issues)
 [![Translation Status](https://hosted.weblate.org/widget/ferrite/ferrite-ui/svg-badge.svg)](https://hosted.weblate.org/engage/ferrite/)
