@@ -226,6 +226,7 @@ about:
     shortcuts: "Snarveier"
     mermaid: "Mermaid"
   description: "En rask og enkel tekstredigerer for Markdown, JSON og mer."
+  build_details: "Byggedetaljer"
   close_hint: "Trykk F1 eller Escape for å lukke"
   # Links section
   links: "Lenker"

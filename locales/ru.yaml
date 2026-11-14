@@ -267,6 +267,7 @@ settings:
   about:
     title: ""
     description: ""
+    build_details: "Детали сборки"
     updates: ""
     check_for_updates: ""
     checking: ""
@@ -418,6 +419,7 @@ about:
     about: ""
     shortcuts: ""
   description: ""
+  build_details: "Детали сборки"
   close_hint: ""
   # Links section
   links: ""

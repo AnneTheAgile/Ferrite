@@ -314,6 +314,7 @@ settings:
   about:
     title: "Info"
     description: "Ein schneller, schlanker Editor für Markdown, JSON und mehr"
+    build_details: "Build-Details"
     updates: "Neue Versionen"
     check_for_updates: "Neue Versionen suchen"
     checking: "Neue Versionen werden gesucht..."
@@ -475,6 +476,7 @@ about:
     shortcuts: "Tastaturkürzel"
     mermaid: "Mermaid"
   description: "Schnelle und schlanke Bearbeitung von Markdown, JSON und mehr."
+  build_details: "Build-Details"
   close_hint: "F1 oder Escape zum Schließen drücken"
   # Links section
   links: "Links"

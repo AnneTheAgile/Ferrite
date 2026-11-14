@@ -373,6 +373,7 @@ settings:
   about:
     title: "About"
     description: "A fast, lightweight text editor for Markdown, JSON, and more"
+    build_details: "Build Details"
     updates: "Updates"
     check_for_updates: "Check for Updates"
     checking: "Checking for updates..."
@@ -571,6 +572,7 @@ about:
       timeline: "Timelines list dated titles along a horizontal axis."
       gitgraph: "Git graph shows commits and branches in a linearized history view."
   description: "A fast, lightweight text editor for Markdown, JSON, and more."
+  build_details: "Build Details"
   close_hint: "Press F1 or Escape to close"
   # Links section
   links: "Links"

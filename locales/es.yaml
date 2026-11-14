@@ -404,6 +404,7 @@ settings:
   about:
     title: Acerca de
     description: Un editor de texto rápido. ligero, para Markdown, JSON, y más
+    build_details: "Detalles de la compilación"
     updates: Actualizaciones
     check_for_updates: Comprobar actualizaciones
     checking: Comprobando actualizaciones…
@@ -833,6 +834,7 @@ about:
     about: Acerca de
     shortcuts: Recortes
   description: Un editor de texto rápido, ligero para Markdown, JSON, y más.
+  build_details: "Detalles de la compilación"
   close_hint: Pulse F1 o Escape para cerrar
   links: Enlaces
   github_label: 'GitHub:'

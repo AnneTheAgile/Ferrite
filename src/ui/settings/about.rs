@@ -104,6 +104,23 @@ fn about_contents(panel: &mut SettingsPanel, ui: &mut Ui, ctx: &egui::Context) {
             .weak()
             .small(),
     );
+    // Which build this is: branch, commit and build time, baked in by
+    // build.rs from FERRITE_BUILD_LABEL. Empty for a plain `cargo build`,
+    // in which case there is nothing extra to show. Labelled so ordinary
+    // users know it is diagnostic detail.
+    let build_label = env!("FERRITE_BUILD_LABEL");
+    if !build_label.is_empty() {
+        ui.add_space(2.0);
+        ui.label(
+            RichText::new(format!(
+                "{}: {build_label}",
+                t!("settings.about.build_details")
+            ))
+            .monospace()
+            .small()
+            .weak(),
+        );
+    }
 
     ui.add_space(12.0);
     ui.separator();

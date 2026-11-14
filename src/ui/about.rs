@@ -289,6 +289,23 @@ impl AboutPanel {
                 );
                 ui.add_space(8.0);
                 ui.label(t!("about.description"));
+                // Which build this is: branch, commit and build time, baked in
+                // by build.rs from FERRITE_BUILD_LABEL. Empty for a plain
+                // `cargo build`, in which case there is nothing extra to show.
+                // Labelled so ordinary users know it is diagnostic detail.
+                let build_label = env!("FERRITE_BUILD_LABEL");
+                if !build_label.is_empty() {
+                    ui.add_space(6.0);
+                    ui.label(
+                        RichText::new(format!(
+                            "{}: {build_label}",
+                            t!("about.build_details")
+                        ))
+                        .size(11.0)
+                        .monospace()
+                        .weak(),
+                    );
+                }
             });
 
             ui.add_space(16.0);
@@ -564,6 +581,58 @@ mod tests {
     fn test_about_panel_default() {
         let panel = AboutPanel::default();
         assert_eq!(panel.active_section, AboutSection::About);
+    }
+
+    /// Collect every text run in the frame's paint list. Nested `Shape::Vec`
+    /// containers are walked too, because widgets may group their shapes.
+    fn collect_texts(shape: &egui::epaint::Shape, out: &mut Vec<String>) {
+        match shape {
+            egui::epaint::Shape::Text(text) => out.push(text.galley.text().to_string()),
+            egui::epaint::Shape::Vec(inner) => {
+                for child in inner {
+                    collect_texts(child, out);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    #[test]
+    fn test_about_renders_build_label() {
+        // The label is baked in by build.rs. A plain `cargo test` has no
+        // label, so there is nothing to assert; a labelled build (the dev
+        // slot) must show the label in the rendered frame.
+        let label = env!("FERRITE_BUILD_LABEL");
+        if label.is_empty() {
+            return;
+        }
+
+        let ctx = egui::Context::default();
+        crate::fonts::setup_fonts_lazy(&ctx);
+        let mut panel = AboutPanel::new();
+        let output = ctx.run_ui(egui::RawInput::default(), |ui| {
+            panel.show_inline(ui, false);
+        });
+
+        let mut texts = Vec::new();
+        for clipped in &output.shapes {
+            collect_texts(&clipped.shape, &mut texts);
+        }
+        assert!(
+            texts.iter().any(|t| t.contains(label)),
+            "build label {label:?} not found in rendered text: {texts:?}"
+        );
+    }
+
+    #[test]
+    fn test_build_label_is_single_line() {
+        // The label is baked in by build.rs, which replaces control
+        // characters with spaces first: `cargo:rustc-env` output is
+        // line-oriented, so a newline would be parsed as another
+        // build-script directive. Empty is fine; a line break is not.
+        let label = env!("FERRITE_BUILD_LABEL");
+        assert!(!label.contains('\n'), "build label contains a newline");
+        assert!(!label.contains('\r'), "build label contains a carriage return");
     }
 
     #[test]

@@ -533,6 +533,7 @@ search:
     Esc-klahviga sulged vaate
 about:
   title: Rakenduse teave / Abiteave
+  build_details: "Kompileerimise üksikasjad"
   tab:
     about: Rakenduse teave
     shortcuts: Kiirklahvid

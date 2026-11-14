@@ -345,6 +345,7 @@ settings:
   about:
     title: "Ferrite について"
     description: "Markdown,JSON などに対応した高速で軽量なテキスト エディタ"
+    build_details: "ビルド詳細"
     updates: "アップデート"
     check_for_updates: "更新の確認"
     checking: "更新の確認中..."
@@ -498,6 +499,7 @@ about:
     shortcuts: "ショートカット"
     mermaid: "Mermaid"
   description: "Markdown、JSON などに対応した高速で軽量なテキストエディタです。"
+  build_details: "ビルド詳細"
   close_hint: "F1 または Escape を押して閉じます"
   # Links section
   links: "リンク"

@@ -276,6 +276,7 @@ settings:
   about:
     title: "关于"
     description: "一款用于 Markdown、JSON 等格式的快速轻量级文本编辑器"
+    build_details: "构建详情"
     updates: "更新"
     check_for_updates: "检查更新"
     checking: "正在检查更新 ..."
@@ -428,6 +429,7 @@ about:
     shortcuts: "快捷键"
     mermaid: "Mermaid"
   description: "一款快速、轻量级的文本编辑器，支持 Markdown、JSON 等格式。"
+  build_details: "构建详情"
   close_hint: "按 F1 或 Esc 键关闭"
   # Links section
   links: "链接部分"
