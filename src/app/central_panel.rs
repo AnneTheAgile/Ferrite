@@ -3113,16 +3113,18 @@ impl FerriteApp {
                 self.push_video_occluder_rect(rect);
             }
 
-            if let Some(cmd) = palette_output.selected_command {
-                self.command_palette.record_recent(cmd);
-                self.state.settings.command_palette_recent = self
-                    .command_palette
-                    .recent_commands()
-                    .iter()
-                    .copied()
-                    .collect();
-                self.state.mark_settings_dirty();
-                self.pending_palette_command = Some(cmd);
+            if let Some(action) = palette_output.selected_action {
+                if let crate::app::commands::PaletteAction::Shortcut(cmd) = &action {
+                    self.command_palette.record_recent(*cmd);
+                    self.state.settings.command_palette_recent = self
+                        .command_palette
+                        .recent_commands()
+                        .iter()
+                        .copied()
+                        .collect();
+                    self.state.mark_settings_dirty();
+                }
+                self.pending_palette_command = Some(action);
             }
         }
 
@@ -3974,7 +3976,20 @@ impl FerriteApp {
     ///
     /// Maps ShortcutCommand variants to the same handler methods used by
     /// the ribbon and keyboard shortcuts.
-    pub(crate) fn dispatch_palette_command(&mut self, ctx: &egui::Context, cmd: ShortcutCommand) {
+    pub(crate) fn dispatch_palette_command(
+        &mut self,
+        ctx: &egui::Context,
+        action: crate::app::commands::PaletteAction,
+    ) {
+        use crate::app::commands::PaletteAction;
+        match action {
+            PaletteAction::Shortcut(cmd) => self.dispatch_shortcut_command(ctx, cmd),
+            PaletteAction::Macro(name) => self.handle_run_macro(&name),
+        }
+    }
+
+    /// Run a built-in shortcut command selected from the palette.
+    pub(crate) fn dispatch_shortcut_command(&mut self, ctx: &egui::Context, cmd: ShortcutCommand) {
         use crate::markdown::MarkdownFormatCommand;
 
         debug!("Command palette: {}", cmd.display_name());

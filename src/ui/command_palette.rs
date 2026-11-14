@@ -5,8 +5,8 @@
 
 #![allow(clippy::collapsible_if)]
 
-use crate::app::commands::{all_palette_commands, PaletteCommand};
-use crate::config::{KeyboardShortcuts, ShortcutCommand};
+use crate::app::commands::{all_palette_commands, PaletteAction, PaletteCommand};
+use crate::config::{KeyboardShortcuts, Macro, ShortcutCommand};
 use crate::ui::icons::phosphor_rich_text;
 use eframe::egui::{self, Color32, Key, LayerId, Order, Pos2, RichText, Sense};
 use fuzzy_matcher::skim::SkimMatcherV2;
@@ -19,8 +19,8 @@ const MAX_RECENT: usize = 20;
 /// Output from the command palette for one frame.
 #[derive(Debug, Default)]
 pub struct CommandPaletteOutput {
-    /// Command selected by the user to execute.
-    pub selected_command: Option<ShortcutCommand>,
+    /// Action selected by the user to execute (built-in command or macro).
+    pub selected_action: Option<PaletteAction>,
     /// Whether the palette was closed this frame.
     pub closed: bool,
     /// Screen rect of the overlay panel (for native WebView occlusion).
@@ -43,21 +43,30 @@ pub struct CommandPalette {
 
 impl Default for CommandPalette {
     fn default() -> Self {
-        Self::new()
+        Self::new(&[])
     }
 }
 
 impl CommandPalette {
-    pub fn new() -> Self {
+    /// Build the palette. `macros` supplies the user-defined rows appended to
+    /// the built-in command list.
+    #[must_use]
+    pub fn new(macros: &[Macro]) -> Self {
         Self {
             is_open: false,
             query: String::new(),
             selected_index: 0,
             matcher: SkimMatcherV2::default(),
             recent_commands: VecDeque::with_capacity(MAX_RECENT),
-            all_commands: all_palette_commands(),
+            all_commands: all_palette_commands(macros),
             last_mouse_pos: None,
         }
+    }
+
+    /// Rebuild the command list, for example after the macro configuration
+    /// changes. Keeps the open/closed state and recent commands.
+    pub fn refresh_macros(&mut self, macros: &[Macro]) {
+        self.all_commands = all_palette_commands(macros);
     }
 
     pub fn is_open(&self) -> bool {
@@ -188,7 +197,7 @@ impl CommandPalette {
             }
             if i.key_pressed(Key::Enter) {
                 if let Some(result) = results.get(self.selected_index) {
-                    output.selected_command = Some(result.command.command);
+                    output.selected_action = Some(result.command.action.clone());
                     output.closed = true;
                 }
             }
@@ -304,27 +313,32 @@ impl CommandPalette {
                                         }
 
                                         // Shortcut hint (right-aligned, only if meaningful)
-                                        let binding = shortcuts.get(result.command.command);
+                                        let binding = result
+                                            .command
+                                            .shortcut_command()
+                                            .map(|c| shortcuts.get(c));
                                         ui.with_layout(
                                             egui::Layout::right_to_left(egui::Align::Center),
                                             |ui| {
                                                 ui.add_space(16.0);
-                                                if binding.has_modifiers() {
-                                                    let shortcut_str = binding.display_string();
-                                                    egui::Frame::new()
-                                                        .fill(shortcut_bg)
-                                                        .corner_radius(3)
-                                                        .inner_margin(egui::Margin::symmetric(6, 2))
-                                                        .show(ui, |ui| {
-                                                            ui.label(
-                                                                RichText::new(shortcut_str)
-                                                                    .color(secondary_color)
-                                                                    .small()
-                                                                    .family(
-                                                                        egui::FontFamily::Monospace,
-                                                                    ),
-                                                            );
-                                                        });
+                                                if let Some(binding) = binding {
+                                                    if binding.has_modifiers() {
+                                                        let shortcut_str = binding.display_string();
+                                                        egui::Frame::new()
+                                                            .fill(shortcut_bg)
+                                                            .corner_radius(3)
+                                                            .inner_margin(egui::Margin::symmetric(6, 2))
+                                                            .show(ui, |ui| {
+                                                                ui.label(
+                                                                    RichText::new(shortcut_str)
+                                                                        .color(secondary_color)
+                                                                        .small()
+                                                                        .family(
+                                                                            egui::FontFamily::Monospace,
+                                                                        ),
+                                                                );
+                                                            });
+                                                    }
                                                 }
                                             },
                                         );
@@ -357,7 +371,7 @@ impl CommandPalette {
                                 }
 
                                 if response.clicked() {
-                                    output.selected_command = Some(result.command.command);
+                                    output.selected_action = Some(result.command.action.clone());
                                     output.closed = true;
                                 }
 
@@ -410,7 +424,9 @@ impl CommandPalette {
         for (idx, cmd) in self.all_commands.iter().enumerate() {
             let search_text = format!("{} {}", cmd.category(), cmd.label());
             if let Some(score) = self.matcher.fuzzy_match(&search_text, &self.query) {
-                let is_recent = self.recent_commands.contains(&cmd.command);
+                let is_recent = cmd
+                    .shortcut_command()
+                    .is_some_and(|c| self.recent_commands.contains(&c));
                 let boosted = if is_recent { score + 100 } else { score };
                 scored.push((idx, boosted));
             }
@@ -425,7 +441,9 @@ impl CommandPalette {
                 let cmd = &self.all_commands[idx];
                 PaletteResult {
                     command: cmd.clone(),
-                    is_recent: self.recent_commands.contains(&cmd.command),
+                    is_recent: cmd
+                        .shortcut_command()
+                        .is_some_and(|c| self.recent_commands.contains(&c)),
                 }
             })
             .collect()
@@ -437,7 +455,11 @@ impl CommandPalette {
 
         // Recent commands first
         for recent_cmd in &self.recent_commands {
-            if let Some(cmd) = self.all_commands.iter().find(|c| c.command == *recent_cmd) {
+            if let Some(cmd) = self
+                .all_commands
+                .iter()
+                .find(|c| c.shortcut_command() == Some(*recent_cmd))
+            {
                 results.push(PaletteResult {
                     command: cmd.clone(),
                     is_recent: true,
@@ -473,10 +495,10 @@ impl CommandPalette {
             if results.len() >= MAX_RESULTS {
                 break;
             }
-            if results.iter().any(|r| r.command.command == sc) {
+            if results.iter().any(|r| r.command.shortcut_command() == Some(sc)) {
                 continue;
             }
-            if let Some(cmd) = self.all_commands.iter().find(|c| c.command == sc) {
+            if let Some(cmd) = self.all_commands.iter().find(|c| c.shortcut_command() == Some(sc)) {
                 results.push(PaletteResult {
                     command: cmd.clone(),
                     is_recent: false,
@@ -500,14 +522,14 @@ mod tests {
 
     #[test]
     fn test_command_palette_new() {
-        let palette = CommandPalette::new();
+        let palette = CommandPalette::new(&[]);
         assert!(!palette.is_open());
         assert!(!palette.all_commands.is_empty());
     }
 
     #[test]
     fn test_command_palette_toggle() {
-        let mut palette = CommandPalette::new();
+        let mut palette = CommandPalette::new(&[]);
         assert!(!palette.is_open());
         palette.toggle();
         assert!(palette.is_open());
@@ -517,7 +539,7 @@ mod tests {
 
     #[test]
     fn test_record_recent() {
-        let mut palette = CommandPalette::new();
+        let mut palette = CommandPalette::new(&[]);
         palette.record_recent(ShortcutCommand::Save);
         palette.record_recent(ShortcutCommand::Open);
         palette.record_recent(ShortcutCommand::Save);
@@ -529,7 +551,7 @@ mod tests {
 
     #[test]
     fn test_filter_empty_query() {
-        let palette = CommandPalette::new();
+        let palette = CommandPalette::new(&[]);
         let results = palette.filter_commands();
         assert!(!results.is_empty());
         assert!(results.len() <= MAX_RESULTS);

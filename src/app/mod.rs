@@ -24,6 +24,7 @@ mod input_handling;
 pub(crate) use file_ops::save_clipboard_rgba_to_assets;
 mod keyboard;
 mod line_ops;
+mod macros;
 mod navigation;
 mod platform;
 mod status_bar;
@@ -95,7 +96,7 @@ pub struct FerriteApp {
     /// Command palette (Alt+Space) for quick command execution
     command_palette: CommandPalette,
     /// Pending command from palette to dispatch after render (avoids mid-render state mutation)
-    pending_palette_command: Option<crate::config::ShortcutCommand>,
+    pending_palette_command: Option<crate::app::commands::PaletteAction>,
     /// Active file operation dialog (New File, Rename, Delete, etc.)
     file_operation_dialog: Option<FileOperationDialog>,
     /// Search in files panel (Ctrl+Shift+F)
@@ -545,6 +546,10 @@ impl FerriteApp {
 
         let (file_load_tx_init, file_load_rx_init) = std::sync::mpsc::channel();
 
+        // Build the palette with the macros already in the settings, so a
+        // configured macro is reachable from the first frame.
+        let command_palette = CommandPalette::new(&state.settings.macros);
+
         let mut app = Self {
             state,
             theme_manager,
@@ -558,7 +563,7 @@ impl FerriteApp {
             backlinks_panel: BacklinksPanel::new(),
             file_tree_panel: FileTreePanel::new(),
             quick_switcher: QuickSwitcher::new(),
-            command_palette: CommandPalette::new(),
+            command_palette,
             pending_palette_command: None,
             file_operation_dialog: None,
             search_panel: SearchPanel::new(),

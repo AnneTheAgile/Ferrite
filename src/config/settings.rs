@@ -1059,6 +1059,65 @@ impl KeyboardShortcuts {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Editor Macro Configuration
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// A single step in a replayed editor macro.
+///
+/// Phase one is deliberately a small, closed vocabulary: there is no recorder
+/// and no text capture. Each step maps onto an editor operation that already
+/// exists, which keeps replay deterministic and testable.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum MacroStep {
+    /// Move the caret to the start of the current logical line.
+    MoveToLineStart,
+    /// Move the caret to the end of the current logical line.
+    MoveToLineEnd,
+    /// Insert text at the caret. A `\n` in the text is translated to the tab's
+    /// own line ending, so CRLF and LF files both behave correctly.
+    Insert(String),
+}
+
+/// A named, replayable sequence of editor steps.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Macro {
+    /// Stable name, shown in the command palette.
+    pub name: String,
+    /// Human-readable description, shown in the palette.
+    #[serde(default)]
+    pub description: String,
+    /// The steps to replay, in order.
+    pub steps: Vec<MacroStep>,
+}
+
+impl Macro {
+    /// The "comment line" macro from the handoff: prefix `-- `, then append a
+    /// space and a newline.
+    #[must_use]
+    pub fn comment_line() -> Self {
+        Self {
+            name: "Comment Line".to_string(),
+            description: "Prefix the line with `-- ` and append a space and a newline"
+                .to_string(),
+            steps: vec![
+                MacroStep::MoveToLineStart,
+                MacroStep::Insert("-- ".to_string()),
+                MacroStep::MoveToLineEnd,
+                MacroStep::Insert(" \n".to_string()),
+            ],
+        }
+    }
+}
+
+/// Serde default for the `macros` field: the example comment-line macro.
+///
+/// Used when a config has no `macros` key at all. Keeping the example in the
+/// default means a fresh install can try a macro without editing JSON first.
+fn default_macros() -> Vec<Macro> {
+    vec![Macro::comment_line()]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Language Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -2468,6 +2527,13 @@ pub struct Settings {
     /// Reference: GitHub Issue #25
     pub keyboard_shortcuts: KeyboardShortcuts,
 
+    /// Replayable editor macros, surfaced in the command palette.
+    ///
+    /// Phase one: fixed command sequences stored in the config. There is no
+    /// input-event recorder; a macro is a literal list of steps.
+    #[serde(default = "default_macros")]
+    pub macros: Vec<Macro>,
+
     // ─────────────────────────────────────────────────────────────────────────
     // Terminal Settings
     // ─────────────────────────────────────────────────────────────────────────
@@ -2739,6 +2805,10 @@ impl Default for Settings {
 
             // Keyboard Shortcuts Settings
             keyboard_shortcuts: KeyboardShortcuts::default(),
+
+            // Editor Macros. The comment-line macro is the example from the
+            // design notes; remove it or add more in the config file.
+            macros: vec![Macro::comment_line()],
 
             // Terminal Settings
             terminal_enabled: true, // Terminal feature enabled by default
@@ -5045,6 +5115,34 @@ mod tests {
         let save_binding = shortcuts.get(ShortcutCommand::Save);
         assert_eq!(save_binding.key, KeyCode::S);
         assert!(save_binding.modifiers.ctrl);
+    }
+
+    #[test]
+    fn test_macros_default_has_comment_line() {
+        let settings = Settings::default();
+        assert!(settings.macros.iter().any(|m| m.name == "Comment Line"));
+    }
+
+    #[test]
+    fn test_macros_serialize_roundtrip() {
+        let settings = Settings::default();
+        let json = serde_json::to_string(&settings).expect("serialize");
+        let back: Settings = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.macros, settings.macros);
+    }
+
+    #[test]
+    fn test_macros_absent_from_json_uses_default() {
+        // An older config without the "macros" key must still load, and gets
+        // the same example macro as a fresh install.
+        let mut value: serde_json::Value =
+            serde_json::to_value(Settings::default()).expect("to_value");
+        value
+            .as_object_mut()
+            .expect("object")
+            .remove("macros");
+        let back: Settings = serde_json::from_value(value).expect("deserialize");
+        assert!(back.macros.iter().any(|m| m.name == "Comment Line"));
     }
 
     #[test]

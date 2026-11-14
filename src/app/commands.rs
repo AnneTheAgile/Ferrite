@@ -2,38 +2,86 @@
 //!
 //! Provides a unified list of all executable commands with metadata
 //! (display name, category, shortcut hint, icon) for the command palette UI.
+//!
+//! The list includes both built-in [`ShortcutCommand`]s and user-defined
+//! editor macros. Macros carry a `macro_name` and are labelled by that name.
 
-use crate::config::ShortcutCommand;
+use crate::config::{Macro, ShortcutCommand};
 
-/// A command entry for the palette, combining a shortcut command with its
-/// display metadata and an optional icon.
+/// What selecting a palette row should do.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PaletteAction {
+    /// Run a built-in shortcut command.
+    Shortcut(ShortcutCommand),
+    /// Run a user-defined macro by name.
+    Macro(String),
+}
+
+/// A command entry for the palette, combining an action with its display
+/// metadata and an optional icon.
 #[derive(Debug, Clone)]
 pub struct PaletteCommand {
-    pub command: ShortcutCommand,
+    /// The action to run when this row is selected.
+    pub action: PaletteAction,
+    /// The icon glyph shown at the left of the row.
     pub icon: &'static str,
 }
 
 impl PaletteCommand {
-    pub fn label(&self) -> &'static str {
-        self.command.display_name()
+    /// The label shown in the row. For a macro this is its configured name.
+    #[must_use]
+    pub fn label(&self) -> &str {
+        match &self.action {
+            PaletteAction::Shortcut(cmd) => cmd.display_name(),
+            PaletteAction::Macro(name) => name,
+        }
     }
 
+    /// The category grouping used when the query is empty.
+    #[must_use]
     pub fn category(&self) -> &'static str {
-        self.command.category()
+        match &self.action {
+            PaletteAction::Shortcut(cmd) => cmd.category(),
+            PaletteAction::Macro(_) => "Macro",
+        }
+    }
+
+    /// The shortcut command this row maps to, when it is a built-in command.
+    ///
+    /// Macros have no key binding, so this returns `None` and the palette
+    /// renders no shortcut hint for them.
+    #[must_use]
+    pub fn shortcut_command(&self) -> Option<ShortcutCommand> {
+        match &self.action {
+            PaletteAction::Shortcut(cmd) => Some(*cmd),
+            PaletteAction::Macro(_) => None,
+        }
     }
 }
 
 /// Build the full list of commands available in the palette.
-/// Excludes CommandPalette itself (no recursion).
-pub fn all_palette_commands() -> Vec<PaletteCommand> {
-    ShortcutCommand::all()
+///
+/// Excludes CommandPalette itself (no recursion). Appends one row per
+/// user-defined macro, in configuration order.
+#[must_use]
+pub fn all_palette_commands(macros: &[Macro]) -> Vec<PaletteCommand> {
+    let mut commands: Vec<PaletteCommand> = ShortcutCommand::all()
         .iter()
         .filter(|cmd| !matches!(cmd, ShortcutCommand::CommandPalette))
         .map(|&command| PaletteCommand {
-            command,
+            action: PaletteAction::Shortcut(command),
             icon: icon_for_command(command),
         })
-        .collect()
+        .collect();
+
+    for m in macros {
+        commands.push(PaletteCommand {
+            action: PaletteAction::Macro(m.name.clone()),
+            icon: crate::ui::phosphor_icons::NOTE_PENCIL,
+        });
+    }
+
+    commands
 }
 
 fn icon_for_command(cmd: ShortcutCommand) -> &'static str {
